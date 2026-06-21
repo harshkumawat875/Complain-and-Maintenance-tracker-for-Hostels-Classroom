@@ -1,5 +1,5 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const multer = require('multer');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
@@ -137,7 +137,110 @@ const uploadProfile = multer({
 });
 
 // Initialize SQLite Database
-const db = new sqlite3.Database('complaints.db');
+// NOTE: Hum 'better-sqlite3' use kar rahe hain 'sqlite3' ke bajaye, kyunki
+// 'sqlite3' ka prebuilt native binary kai cloud hosting platforms
+// (jaise Render) ke Linux environment ke GLIBC version se compatible nahi
+// hota aur deploy fail ho jata hai ("GLIBC_2.38 not found" jaisi error).
+// 'better-sqlite3' zyada reliably build hota hai aur deployment ke liye
+// behtar maana jata hai.
+//
+// Neeche ek chhota compatibility wrapper hai jo better-sqlite3 (jo
+// synchronous hai) ko purane sqlite3-style async/callback API jaisa
+// dikhata hai (db.run/get/all/prepare/serialize) - isliye baaki poora
+// server.js code bina kisi change ke kaam karta rehta hai.
+const rawDb = new Database('complaints.db');
+rawDb.pragma('journal_mode = WAL');
+
+const db = {
+    // db.run(sql, [params], callback) - INSERT/UPDATE/DELETE/CREATE TABLE etc.
+    // callback ke andar 'this.lastID' aur 'this.changes' available hote hain,
+    // jaise original sqlite3 package mein hote the.
+    run(sql, params, callback) {
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+        params = params || [];
+        try {
+            const stmt = rawDb.prepare(sql);
+            const info = stmt.run(...params);
+            const context = { lastID: info.lastInsertRowid, changes: info.changes };
+            if (callback) callback.call(context, null);
+        } catch (err) {
+            if (callback) callback.call({}, err);
+            else console.error('DB run error (no callback):', err.message);
+        }
+        return db;
+    },
+
+    // db.get(sql, [params], callback) - single row fetch
+    get(sql, params, callback) {
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+        params = params || [];
+        try {
+            const stmt = rawDb.prepare(sql);
+            const row = stmt.get(...params);
+            if (callback) callback(null, row);
+        } catch (err) {
+            if (callback) callback(err);
+        }
+        return db;
+    },
+
+    // db.all(sql, [params], callback) - multiple rows fetch
+    all(sql, params, callback) {
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+        params = params || [];
+        try {
+            const stmt = rawDb.prepare(sql);
+            const rows = stmt.all(...params);
+            if (callback) callback(null, rows);
+        } catch (err) {
+            if (callback) callback(err, undefined);
+        }
+        return db;
+    },
+
+    // db.serialize(fn) - better-sqlite3 is already synchronous, so we
+    // can just run the function immediately.
+    serialize(fn) {
+        fn();
+    },
+
+    // db.prepare(sql) - returns a statement-like object with .run() and
+    // .finalize(), matching how change-admin scripts / staff seeding use it.
+    prepare(sql) {
+        const stmt = rawDb.prepare(sql);
+        return {
+            run(...params) {
+                try {
+                    stmt.run(...params);
+                } catch (err) {
+                    console.error('Prepared statement run error:', err.message);
+                }
+                return this;
+            },
+            finalize(callback) {
+                if (callback) callback(null);
+            }
+        };
+    },
+
+    close(callback) {
+        try {
+            rawDb.close();
+            if (callback) callback(null);
+        } catch (err) {
+            if (callback) callback(err);
+        }
+    }
+};
 
 // Create tables
 db.serialize(() => {

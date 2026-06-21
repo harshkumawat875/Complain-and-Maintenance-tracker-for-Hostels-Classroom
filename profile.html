@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings - Campus Maintenance Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        .profile-photo-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .photo-upload-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .profile-photo-container:hover .photo-upload-overlay {
+            opacity: 1;
+        }
+        
+        .drag-drop-area {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        
+        .drag-drop-area.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    
+    <!-- Navigation -->
+    <nav class="bg-white shadow-xl sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 text-xl font-extrabold text-blue-900">
+                        <i class="fas fa-hammer text-3xl mr-2 text-red-500 transform rotate-45"></i>
+                        <span class="hidden sm:inline">Complaint Tracker</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="dashboard.html" class="text-gray-900 font-semibold hover:text-blue-700 transition duration-150">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a>
+                    <a href="complaint-form.html" class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-600 transition duration-200">
+                        <i class="fas fa-plus mr-2"></i>New Complaint
+                    </a>
+                    <div id="userProfile" class="flex items-center space-x-2">
+                        <!-- User profile will be populated by JavaScript -->
+                    </div>
+                    <button onclick="signOut()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-600 transition duration-200">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-user-cog mr-3 text-blue-500"></i>
+                Profile Settings
+            </h1>
+            <p class="text-gray-600">Manage your account information and preferences</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Profile Photo Section -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">
+                        <i class="fas fa-camera mr-2 text-purple-500"></i>
+                        Profile Photo
+                    </h2>
+                    
+                    <!-- Current Photo -->
+                    <div class="text-center mb-6">
+                        <div class="profile-photo-container">
+                            <img id="currentPhoto" src="" alt="Profile Photo" class="w-32 h-32 rounded-full mx-auto border-4 border-gray-200 shadow-lg">
+                            <div class="photo-upload-overlay">
+                                <i class="fas fa-camera text-white text-2xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-2">Click to change photo</p>
+                    </div>
+                    
+                    <!-- Upload Area -->
+                    <div class="drag-drop-area p-6 rounded-lg text-center mb-4" id="dropArea">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600 mb-2">Drag & drop your photo here</p>
+                        <p class="text-sm text-gray-500 mb-4">or</p>
+                        <button onclick="document.getElementById('photoInput').click()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
+                            <i class="fas fa-upload mr-2"></i>Choose File
+                        </button>
+                        <input type="file" id="photoInput" accept="image/*" class="hidden">
+                    </div>
+                    
+                    <div class="text-xs text-gray-500 space-y-1">
+                        <p>• Maximum file size: 2MB</p>
+                        <p>• Supported formats: JPG, PNG, GIF</p>
+                        <p>• Recommended: Square images (1:1 ratio)</p>
+                    </div>
+                    
+                    <!-- Upload Progress -->
+                    <div id="uploadProgress" class="hidden mt-4">
+                        <div class="bg-gray-200 rounded-full h-2">
+                            <div id="progressBar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">Uploading...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Information -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">
+                        <i class="fas fa-user-edit mr-2 text-green-500"></i>
+                        Personal Information
+                    </h2>
+                    
+                    <form id="profileForm" class="space-y-6">
+                        
+                        <!-- Name -->
+                        <div>
+                            <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-user mr-2 text-blue-500"></i>Full Name *
+                            </label>
+                            <input 
+                                type="text" 
+                                id="name" 
+                                name="name" 
+                                required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                placeholder="Enter your full name"
+                            >
+                        </div>
+                        
+                        <!-- Email (Read-only) -->
+                        <div>
+                            <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-envelope mr-2 text-blue-500"></i>Email Address
+                            </label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                readonly
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                                placeholder="Email address"
+                            >
+                            <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                        </div>
+                        
+                        <!-- Student ID -->
+                        <div>
+                            <label for="studentId" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-id-card mr-2 text-blue-500"></i>Student/Employee ID
+                            </label>
+                            <input 
+                                type="text" 
+                                id="studentId" 
+                                name="student_id"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                placeholder="Enter your ID number"
+                            >
+                        </div>
+                        
+                        <!-- Role (Read-only) -->
+                        <div>
+                            <label for="role" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-user-tag mr-2 text-blue-500"></i>Role
+                            </label>
+                            <input 
+                                type="text" 
+                                id="role" 
+                                name="role" 
+                                readonly
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                                placeholder="Role"
+                            >
+                            <p class="text-xs text-gray-500 mt-1">Role is assigned by the system</p>
+                        </div>
+                        
+                        <!-- Member Since -->
+                        <div>
+                            <label for="memberSince" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-calendar mr-2 text-blue-500"></i>Member Since
+                            </label>
+                            <input 
+                                type="text" 
+                                id="memberSince" 
+                                readonly
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                                placeholder="Member since"
+                            >
+                        </div>
+                        
+                        <!-- Save Button -->
+                        <div class="pt-4">
+                            <button 
+                                type="submit" 
+                                class="w-full bg-green-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-600 transition duration-200"
+                            >
+                                <i class="fas fa-save mr-2"></i>Save Changes
+                            </button>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Account Actions -->
+        <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">
+                <i class="fas fa-cogs mr-2 text-red-500"></i>
+                Account Actions
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition duration-200">
+                    <i class="fas fa-key mr-2"></i>Change Password
+                </button>
+                <button class="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition duration-200">
+                    <i class="fas fa-download mr-2"></i>Download My Data
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Authentication JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <!-- Profile JavaScript -->
+    <script>
+        let currentUser = null;
+        
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            currentUser = checkAuthStatus();
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Refresh user data to get latest profile info
+            const refreshedUser = await refreshUserProfile();
+            currentUser = refreshedUser || currentUser;
+            
+            loadUserProfile();
+            setupPhotoUpload();
+        });
+
+        async function loadUserProfile() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    populateProfileForm(user);
+                    updateNavProfile(user);
+                } else {
+                    throw new Error('Failed to load profile');
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showError('Failed to load profile data');
+            }
+        }
+
+        function populateProfileForm(user) {
+            document.getElementById('name').value = user.name || '';
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('studentId').value = user.student_id || '';
+            document.getElementById('role').value = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '';
+            document.getElementById('memberSince').value = user.created_at ? new Date(user.created_at).toLocaleDateString() : '';
+            
+            // Set profile photo
+            const photoUrl = user.profile_picture_url || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4f46e5&color=fff&size=128`;
+            document.getElementById('currentPhoto').src = photoUrl;
+        }
+
+        function updateNavProfile(user) {
+            const profileContainer = document.getElementById('userProfile');
+            const avatarUrl = user.profile_picture_url || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4f46e5&color=fff&size=32`;
+            
+            profileContainer.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <img src="${avatarUrl}" alt="${user.name}" class="w-8 h-8 rounded-full border-2 border-blue-500">
+                    <div class="hidden sm:block">
+                        <p class="font-semibold text-gray-700">${user.name}</p>
+                        <p class="text-xs text-gray-500">${user.email}</p>
+                    </div>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu(event)" class="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition duration-200">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                            <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150">
+                                <i class="fas fa-user mr-2 text-blue-500"></i>Profile Settings
+                            </a>
+                            <a href="complaint-form.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150">
+                                <i class="fas fa-plus mr-2 text-green-500"></i>New Complaint
+                            </a>
+                            <a href="dashboard.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150">
+                                <i class="fas fa-tachometer-alt mr-2 text-purple-500"></i>Dashboard
+                            </a>
+                            <hr class="my-1">
+                            <button onclick="signOut()" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition duration-150">
+                                <i class="fas fa-sign-out-alt mr-2 text-red-500"></i>Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Toggle user menu
+        function toggleUserMenu(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('userMenu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
+        }
+        
+        // Close user menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('userMenu');
+            const profileSection = event.target.closest('#userProfile');
+            
+            if (!profileSection && menu) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        function setupPhotoUpload() {
+            const photoInput = document.getElementById('photoInput');
+            const dropArea = document.getElementById('dropArea');
+            const currentPhoto = document.getElementById('currentPhoto');
+
+            // Click on photo to upload
+            currentPhoto.addEventListener('click', () => {
+                photoInput.click();
+            });
+
+            // File input change
+            photoInput.addEventListener('change', handlePhotoUpload);
+
+            // Drag and drop
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.classList.add('dragover');
+            });
+
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.classList.remove('dragover');
+            });
+
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handlePhotoFile(files[0]);
+                }
+            });
+        }
+
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handlePhotoFile(file);
+            }
+        }
+
+        async function handlePhotoFile(file) {
+            // Validate file
+            if (!file.type.startsWith('image/')) {
+                showError('Please select an image file');
+                return;
+            }
+
+            if (file.size > 2 * 1024 * 1024) {
+                showError('File size must be less than 2MB');
+                return;
+            }
+
+            // Show progress
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            progressDiv.classList.remove('hidden');
+
+            try {
+                const formData = new FormData();
+                formData.append('photo', file);
+
+                const response = await fetch(`${API_BASE_URL}/api/profile/photo`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Update photo display
+                    document.getElementById('currentPhoto').src = `${API_BASE_URL}${result.photo_url}`;
+                    showSuccess('Profile photo updated successfully!');
+                    
+                    // Update stored user data
+                    const user = JSON.parse(localStorage.getItem('user'));
+                    user.profile_picture_url = `${API_BASE_URL}${result.photo_url}`;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    // Update nav profile
+                    updateNavProfile(user);
+                } else {
+                    throw new Error(result.error || 'Failed to upload photo');
+                }
+            } catch (error) {
+                console.error('Photo upload error:', error);
+                showError(error.message || 'Failed to upload photo');
+            } finally {
+                progressDiv.classList.add('hidden');
+                progressBar.style.width = '0%';
+            }
+        }
+
+        // Profile form submission
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showSuccess('Profile updated successfully!');
+                    
+                    // Update stored user data
+                    const user = JSON.parse(localStorage.getItem('user'));
+                    user.name = data.name;
+                    user.student_id = data.student_id;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    // Update nav profile
+                    updateNavProfile(user);
+                } else {
+                    throw new Error(result.error || 'Failed to update profile');
+                }
+            } catch (error) {
+                console.error('Profile update error:', error);
+                showError(error.message || 'Failed to update profile');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+            successDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-3"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                if (successDiv.parentElement) {
+                    successDiv.remove();
+                }
+            }, 3000);
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+            errorDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-3"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                if (errorDiv.parentElement) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+
+</body>
+</html>

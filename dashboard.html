@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Campus Maintenance Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f2f7ff;
+        }
+        
+        .status-pending { color: #f59e0b; }
+        .status-in_progress { color: #3b82f6; }
+        .status-resolved { color: #10b981; }
+        
+        .priority-high { color: #ef4444; }
+        .priority-medium { color: #f59e0b; }
+        .priority-low { color: #10b981; }
+        
+        .complaint-card {
+            transition: all 0.3s ease;
+        }
+        
+        .complaint-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navigation -->
+    <nav class="bg-white shadow-xl sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 text-xl font-extrabold text-blue-900">
+                        <i class="fas fa-hammer text-3xl mr-2 text-red-500 transform rotate-45"></i>
+                        <span class="hidden sm:inline">Complaint Tracker</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="index.html" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-600 transition duration-200">
+                        <i class="fas fa-home mr-2"></i>Home
+                    </a>
+                    <a href="complaint-form.html" class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-600 transition duration-200">
+                        <i class="fas fa-plus mr-2"></i>New Complaint
+                    </a>
+                    <div id="userProfile" class="flex items-center space-x-2">
+                        <!-- User profile will be populated by JavaScript -->
+                    </div>
+                    <button onclick="signOut()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-600 transition duration-200">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Welcome Section -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                        <i class="fas fa-tachometer-alt mr-3 text-blue-500"></i>
+                        Dashboard
+                    </h1>
+                    <p class="text-gray-600" id="welcomeMessage">Track your complaints and their resolution status</p>
+                </div>
+                <div class="hidden md:block">
+                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-xl shadow-lg">
+                        <div class="flex items-center space-x-3">
+                            <div id="welcomeAvatar" class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                                <i class="fas fa-user text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold" id="welcomeName">Welcome!</p>
+                                <p class="text-sm opacity-90" id="welcomeRole">Student</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="stats-card text-white p-6 rounded-xl shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm">Total Complaints</p>
+                        <p class="text-3xl font-bold" id="totalComplaints">0</p>
+                    </div>
+                    <i class="fas fa-clipboard-list text-4xl text-blue-200"></i>
+                </div>
+            </div>
+            
+            <div class="bg-yellow-500 text-white p-6 rounded-xl shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-yellow-100 text-sm">Pending</p>
+                        <p class="text-3xl font-bold" id="pendingComplaints">0</p>
+                    </div>
+                    <i class="fas fa-clock text-4xl text-yellow-200"></i>
+                </div>
+            </div>
+            
+            <div class="bg-blue-500 text-white p-6 rounded-xl shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm">In Progress</p>
+                        <p class="text-3xl font-bold" id="inProgressComplaints">0</p>
+                    </div>
+                    <i class="fas fa-cog text-4xl text-blue-200"></i>
+                </div>
+            </div>
+            
+            <div class="bg-green-500 text-white p-6 rounded-xl shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-green-100 text-sm">Resolved</p>
+                        <p class="text-3xl font-bold" id="resolvedComplaints">0</p>
+                    </div>
+                    <i class="fas fa-check-circle text-4xl text-green-200"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-filter mr-2 text-blue-500"></i>Filter Complaints
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label for="statusFilter" class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <select id="statusFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="typeFilter" class="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+                    <select id="typeFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                        <option value="">All Types</option>
+                        <option value="Electricity">Electricity</option>
+                        <option value="Plumbing">Plumbing</option>
+                        <option value="Cleaning">Cleaning</option>
+                        <option value="Internet">Internet</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-end">
+                    <button onclick="applyFilters()" class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
+                        <i class="fas fa-search mr-2"></i>Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complaints List -->
+        <div class="bg-white rounded-xl shadow-lg">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-list mr-2 text-blue-500"></i>My Complaints
+                </h2>
+            </div>
+            
+            <div id="complaintsContainer" class="p-6">
+                <!-- Loading state -->
+                <div id="loadingState" class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+                    <p class="text-gray-600">Loading your complaints...</p>
+                </div>
+                
+                <!-- Empty state -->
+                <div id="emptyState" class="text-center py-8 hidden">
+                    <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-600 mb-2">No complaints found</h3>
+                    <p class="text-gray-500 mb-4">You haven't submitted any complaints yet.</p>
+                    <a href="complaint-form.html" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition duration-200">
+                        <i class="fas fa-plus mr-2"></i>Submit Your First Complaint
+                    </a>
+                </div>
+                
+                <!-- Complaints will be populated here -->
+                <div id="complaintsList" class="space-y-4"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Complaint Detail Modal -->
+    <div id="complaintModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-2xl mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900">Complaint Details</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="modalContent">
+                <!-- Modal content will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md mx-4">
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Rate Our Service</h3>
+                <p class="text-gray-600">How satisfied are you with the resolution?</p>
+            </div>
+            
+            <form id="feedbackForm">
+                <input type="hidden" id="feedbackComplaintId">
+                
+                <!-- Rating -->
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Rating</label>
+                    <div class="flex justify-center space-x-2">
+                        <button type="button" class="star-btn text-3xl text-gray-300 hover:text-yellow-400" data-rating="1">★</button>
+                        <button type="button" class="star-btn text-3xl text-gray-300 hover:text-yellow-400" data-rating="2">★</button>
+                        <button type="button" class="star-btn text-3xl text-gray-300 hover:text-yellow-400" data-rating="3">★</button>
+                        <button type="button" class="star-btn text-3xl text-gray-300 hover:text-yellow-400" data-rating="4">★</button>
+                        <button type="button" class="star-btn text-3xl text-gray-300 hover:text-yellow-400" data-rating="5">★</button>
+                    </div>
+                    <input type="hidden" id="rating" name="rating" required>
+                </div>
+                
+                <!-- Comment -->
+                <div class="mb-6">
+                    <label for="comment" class="block text-sm font-semibold text-gray-700 mb-2">Comment (Optional)</label>
+                    <textarea 
+                        id="comment" 
+                        name="comment" 
+                        rows="3"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                        placeholder="Share your experience..."
+                    ></textarea>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="submit" class="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition duration-200">
+                        Submit Feedback
+                    </button>
+                    <button type="button" onclick="closeFeedbackModal()" class="px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Authentication JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <!-- Socket.io for real-time updates -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- Dashboard JavaScript -->
+    <script>
+        let socket;
+        let complaints = [];
+        let selectedRating = 0;
+        
+        // Initialize socket connection
+        function initSocket() {
+            try {
+                if (typeof io !== 'undefined') {
+                    socket = io(SOCKET_URL);
+                    
+                    socket.on('connect', () => {
+                        console.log('Connected to server');
+                    });
+                    
+                    socket.on('connect_error', (error) => {
+                        console.log('Socket connection error:', error);
+                    });
+                    
+                    socket.on('status_update', (data) => {
+                        // Update complaint status in real-time
+                        updateComplaintStatus(data.complaint_id, data.status);
+                    });
+                } else {
+                    console.log('Socket.io not available - real-time features disabled');
+                }
+            } catch (error) {
+                console.log('Socket initialization error:', error);
+            }
+        }
+
+        // Check authentication and load dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = checkAuthStatus();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Refresh user profile data from server to get latest photo
+            const refreshedUser = await refreshUserProfile();
+            const currentUser = refreshedUser || user;
+            
+            // Display user profile
+            displayUserProfile(currentUser);
+            
+            // Initialize socket
+            initSocket();
+            
+            // Load complaints
+            loadComplaints();
+            
+            // Set up star rating
+            setupStarRating();
+        });
+
+        function displayUserProfile(user) {
+            const profileContainer = document.getElementById('userProfile');
+            
+            // Use real profile picture if available, otherwise generate avatar
+            const avatarUrl = user.profile_picture_url || user.profile_picture || user.picture || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4f46e5&color=fff&size=32`;
+            
+            // Update navigation profile
+            profileContainer.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <img src="${avatarUrl}" alt="${user.name}" class="w-8 h-8 rounded-full border-2 border-blue-500">
+                    <div class="hidden sm:block">
+                        <p class="font-semibold text-gray-700">${user.name}</p>
+                        <p class="text-xs text-gray-500">${user.email}</p>
+                    </div>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu(event)" class="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition duration-200">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                            <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150">
+                                <i class="fas fa-user mr-2 text-blue-500"></i>Profile Settings
+                            </a>
+                            <a href="complaint-form.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150">
+                                <i class="fas fa-plus mr-2 text-green-500"></i>New Complaint
+                            </a>
+                            <a href="dashboard.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150">
+                                <i class="fas fa-tachometer-alt mr-2 text-purple-500"></i>Dashboard
+                            </a>
+                            <hr class="my-1">
+                            <button onclick="signOut()" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition duration-150">
+                                <i class="fas fa-sign-out-alt mr-2 text-red-500"></i>Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Update welcome section
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            const welcomeName = document.getElementById('welcomeName');
+            const welcomeRole = document.getElementById('welcomeRole');
+            const welcomeAvatar = document.getElementById('welcomeAvatar');
+            
+            if (welcomeMessage) {
+                welcomeMessage.textContent = `Welcome back, ${user.name.split(' ')[0]}! Track your complaints and their resolution status`;
+            }
+            
+            if (welcomeName) {
+                welcomeName.textContent = `Welcome, ${user.name}!`;
+            }
+            
+            if (welcomeRole) {
+                welcomeRole.textContent = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Student';
+            }
+            
+            if (welcomeAvatar) {
+                const avatarUrlLarge = user.profile_picture_url || user.profile_picture || user.picture || 
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=ffffff&color=4f46e5&size=48`;
+                
+                welcomeAvatar.innerHTML = `<img src="${avatarUrlLarge}" alt="${user.name}" class="w-12 h-12 rounded-full">`;
+            }
+        }
+        
+        // Toggle user menu
+        function toggleUserMenu(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('userMenu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
+        }
+        
+        // Close user menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('userMenu');
+            const profileSection = event.target.closest('#userProfile');
+            
+            if (!profileSection && menu) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        async function loadComplaints() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/my-complaints`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    complaints = await response.json();
+                    displayComplaints(complaints);
+                    updateStats(complaints);
+                } else {
+                    throw new Error('Failed to load complaints');
+                }
+            } catch (error) {
+                console.error('Error loading complaints:', error);
+                showError('Failed to load complaints');
+            } finally {
+                document.getElementById('loadingState').classList.add('hidden');
+            }
+        }
+
+        function displayComplaints(complaintsToShow) {
+            const container = document.getElementById('complaintsList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (complaintsToShow.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = complaintsToShow.map(complaint => `
+                <div class="complaint-card bg-gray-50 p-6 rounded-lg border border-gray-200 cursor-pointer" onclick="showComplaintDetails(${complaint.id})">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">${complaint.title}</h3>
+                            <p class="text-gray-600 text-sm mb-2">${complaint.description.substring(0, 100)}${complaint.description.length > 100 ? '...' : ''}</p>
+                        </div>
+                        <div class="flex flex-col items-end space-y-2">
+                            <span class="status-${complaint.status} font-semibold text-sm px-3 py-1 rounded-full bg-white border">
+                                ${getStatusIcon(complaint.status)} ${formatStatus(complaint.status)}
+                            </span>
+                            <span class="priority-${complaint.priority} font-semibold text-xs">
+                                ${getPriorityIcon(complaint.priority)} ${complaint.priority.toUpperCase()}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div>
+                            <i class="fas fa-tag mr-1 text-blue-500"></i>
+                            <strong>Type:</strong> ${complaint.complaint_type}
+                        </div>
+                        <div>
+                            <i class="fas fa-map-marker-alt mr-1 text-red-500"></i>
+                            <strong>Location:</strong> ${complaint.location}
+                        </div>
+                        <div class="col-span-2">
+                            <i class="fas fa-user-cog mr-1 text-green-500"></i>
+                            <strong>Assigned:</strong> 
+                            ${complaint.assigned_staff_name ? 
+                                `<span class="text-green-700 font-medium">${complaint.assigned_staff_name}</span>
+                                 ${complaint.department ? `<span class="text-gray-500 text-xs">(${complaint.department})</span>` : ''}
+                                 ${complaint.staff_phone ? `<br><i class="fas fa-phone ml-4 mr-1 text-blue-500"></i><span class="text-blue-600">${complaint.staff_phone}</span>` : ''}` :
+                                complaint.manual_staff_name ?
+                                `<span class="text-blue-700 font-medium">${complaint.manual_staff_name}</span>
+                                 ${complaint.manual_staff_department ? `<span class="text-gray-500 text-xs">(${complaint.manual_staff_department})</span>` : ''}
+                                 <br><i class="fas fa-phone ml-4 mr-1 text-green-500"></i><span class="text-green-600">${complaint.manual_staff_phone}</span>
+                                 ${complaint.manual_staff_email ? `<br><i class="fas fa-envelope ml-4 mr-1 text-purple-500"></i><span class="text-purple-600">${complaint.manual_staff_email}</span>` : ''}` :
+                                '<span class="text-gray-500">Not assigned yet</span>'
+                            }
+                        </div>
+                        <div>
+                            <i class="fas fa-calendar mr-1 text-purple-500"></i>
+                            <strong>Date:</strong> ${formatDate(complaint.created_at)}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-between items-center">
+                        <span class="text-xs text-gray-500">ID: ${complaint.complaint_id}</span>
+                        <div class="flex space-x-2">
+                            ${complaint.status === 'resolved' ? `
+                                <button onclick="event.stopPropagation(); showFeedbackModal(${complaint.id})" class="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 transition duration-200">
+                                    <i class="fas fa-star mr-1"></i>Rate Service
+                                </button>
+                            ` : ''}
+                            ${complaint.status === 'pending' ? `
+                                <button onclick="event.stopPropagation(); deleteComplaint(${complaint.id}, '${complaint.complaint_id}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition duration-200">
+                                    <i class="fas fa-trash mr-1"></i>Delete
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats(complaints) {
+            const total = complaints.length;
+            const pending = complaints.filter(c => c.status === 'pending').length;
+            const inProgress = complaints.filter(c => c.status === 'in_progress').length;
+            const resolved = complaints.filter(c => c.status === 'resolved').length;
+            
+            document.getElementById('totalComplaints').textContent = total;
+            document.getElementById('pendingComplaints').textContent = pending;
+            document.getElementById('inProgressComplaints').textContent = inProgress;
+            document.getElementById('resolvedComplaints').textContent = resolved;
+        }
+
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            
+            let filteredComplaints = complaints;
+            
+            if (statusFilter) {
+                filteredComplaints = filteredComplaints.filter(c => c.status === statusFilter);
+            }
+            
+            if (typeFilter) {
+                filteredComplaints = filteredComplaints.filter(c => c.complaint_type === typeFilter);
+            }
+            
+            displayComplaints(filteredComplaints);
+        }
+
+        function showComplaintDetails(complaintId) {
+            const complaint = complaints.find(c => c.id === complaintId);
+            if (!complaint) return;
+            
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-start">
+                        <h4 class="text-xl font-semibold text-gray-900">${complaint.title}</h4>
+                        <span class="status-${complaint.status} font-semibold text-sm px-3 py-1 rounded-full bg-gray-100">
+                            ${getStatusIcon(complaint.status)} ${formatStatus(complaint.status)}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><strong>Complaint ID:</strong> ${complaint.complaint_id}</div>
+                        <div><strong>Type:</strong> ${complaint.complaint_type}</div>
+                        <div><strong>Priority:</strong> <span class="priority-${complaint.priority}">${complaint.priority.toUpperCase()}</span></div>
+                        <div><strong>Location:</strong> ${complaint.location}</div>
+                        ${complaint.room_number ? `<div><strong>Room:</strong> ${complaint.room_number}</div>` : ''}
+                        ${complaint.block ? `<div><strong>Block:</strong> ${complaint.block}</div>` : ''}
+                        ${complaint.hostel_name ? `<div><strong>Hostel:</strong> ${complaint.hostel_name}</div>` : ''}
+                        <div class="col-span-2">
+                            <strong>Assigned to:</strong> 
+                            ${complaint.assigned_staff_name ? 
+                                `<div class="mt-1 p-2 bg-green-50 rounded border-l-4 border-green-400">
+                                    <div class="text-green-800 font-medium">${complaint.assigned_staff_name}</div>
+                                    ${complaint.department ? `<div class="text-green-600 text-xs">${complaint.department} Department</div>` : ''}
+                                    ${complaint.staff_phone ? `<div class="text-blue-600 text-sm"><i class="fas fa-phone mr-1"></i>${complaint.staff_phone}</div>` : ''}
+                                </div>` :
+                                complaint.manual_staff_name ?
+                                `<div class="mt-1 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                                    <div class="text-blue-800 font-medium">${complaint.manual_staff_name}</div>
+                                    ${complaint.manual_staff_department ? `<div class="text-blue-600 text-xs">${complaint.manual_staff_department} Department</div>` : ''}
+                                    <div class="text-green-600 text-sm"><i class="fas fa-phone mr-1"></i>${complaint.manual_staff_phone}</div>
+                                    ${complaint.manual_staff_email ? `<div class="text-purple-600 text-sm"><i class="fas fa-envelope mr-1"></i>${complaint.manual_staff_email}</div>` : ''}
+                                </div>` :
+                                '<span class="text-gray-500">Not assigned yet</span>'
+                            }
+                        </div>
+                        <div><strong>Submitted:</strong> ${formatDate(complaint.created_at)}</div>
+                        ${complaint.resolved_at ? `<div><strong>Resolved:</strong> ${formatDate(complaint.resolved_at)}</div>` : ''}
+                    </div>
+                    
+                    <div>
+                        <strong>Description:</strong>
+                        <p class="mt-2 text-gray-700 bg-gray-50 p-3 rounded">${complaint.description}</p>
+                    </div>
+                    
+                    ${complaint.image_path ? `
+                        <div>
+                            <strong>Attached Image:</strong>
+                            <img src="${API_BASE_URL}/uploads/${complaint.image_path}" alt="Complaint image" class="mt-2 max-w-full h-auto rounded border">
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('complaintModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('complaintModal').classList.add('hidden');
+        }
+
+        async function deleteComplaint(complaintId, complaintCode) {
+            if (!confirm(`Are you sure you want to delete complaint ${complaintCode}?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/complaints/${complaintId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    showNotification('Complaint deleted successfully!', 'success');
+                    // Remove complaint from local array
+                    complaints = complaints.filter(c => c.id !== complaintId);
+                    // Refresh display
+                    displayComplaints(complaints);
+                    updateStats(complaints);
+                } else {
+                    const errorData = await response.json();
+                    showNotification(errorData.error || 'Failed to delete complaint', 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showNotification('Network error occurred', 'error');
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            // Create notification element if it doesn't exist
+            let notification = document.getElementById('notification');
+            if (!notification) {
+                notification = document.createElement('div');
+                notification.id = 'notification';
+                notification.className = 'fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transform translate-x-full transition-transform duration-300';
+                document.body.appendChild(notification);
+            }
+
+            // Set message and style
+            notification.textContent = message;
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transform transition-transform duration-300 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+
+            // Show notification
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+
+            // Hide notification after 3 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+            }, 3000);
+        }
+
+        function showFeedbackModal(complaintId) {
+            document.getElementById('feedbackComplaintId').value = complaintId;
+            document.getElementById('feedbackModal').classList.remove('hidden');
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.add('hidden');
+            document.getElementById('feedbackForm').reset();
+            selectedRating = 0;
+            updateStarDisplay();
+        }
+
+        function setupStarRating() {
+            const starButtons = document.querySelectorAll('.star-btn');
+            
+            starButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    selectedRating = parseInt(this.dataset.rating);
+                    document.getElementById('rating').value = selectedRating;
+                    updateStarDisplay();
+                });
+            });
+        }
+
+        function updateStarDisplay() {
+            const starButtons = document.querySelectorAll('.star-btn');
+            starButtons.forEach((btn, index) => {
+                if (index < selectedRating) {
+                    btn.classList.remove('text-gray-300');
+                    btn.classList.add('text-yellow-400');
+                } else {
+                    btn.classList.remove('text-yellow-400');
+                    btn.classList.add('text-gray-300');
+                }
+            });
+        }
+
+        // Feedback form submission
+        document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const complaintId = document.getElementById('feedbackComplaintId').value;
+            const rating = document.getElementById('rating').value;
+            const comment = document.getElementById('comment').value;
+            
+            if (!rating) {
+                alert('Please select a rating');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/complaints/${complaintId}/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ rating: parseInt(rating), comment })
+                });
+                
+                if (response.ok) {
+                    showSuccess('Thank you for your feedback!');
+                    closeFeedbackModal();
+                } else {
+                    throw new Error('Failed to submit feedback');
+                }
+            } catch (error) {
+                showError('Failed to submit feedback');
+            }
+        });
+
+        function updateComplaintStatus(complaintId, newStatus) {
+            const complaint = complaints.find(c => c.id === parseInt(complaintId));
+            if (complaint) {
+                complaint.status = newStatus;
+                if (newStatus === 'resolved') {
+                    complaint.resolved_at = new Date().toISOString();
+                }
+                displayComplaints(complaints);
+                updateStats(complaints);
+            }
+        }
+
+        // Utility functions
+        function getStatusIcon(status) {
+            const icons = {
+                'pending': '<i class="fas fa-clock"></i>',
+                'in_progress': '<i class="fas fa-cog fa-spin"></i>',
+                'resolved': '<i class="fas fa-check-circle"></i>'
+            };
+            return icons[status] || '';
+        }
+
+        function getPriorityIcon(priority) {
+            const icons = {
+                'low': '<i class="fas fa-arrow-down"></i>',
+                'medium': '<i class="fas fa-minus"></i>',
+                'high': '<i class="fas fa-arrow-up"></i>'
+            };
+            return icons[priority] || '';
+        }
+
+        function formatStatus(status) {
+            return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+            successDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-3"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                if (successDiv.parentElement) {
+                    successDiv.remove();
+                }
+            }, 3000);
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+            errorDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-3"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                if (errorDiv.parentElement) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+
+</body>
+</html>

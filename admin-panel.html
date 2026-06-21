@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Complaint Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        .status-pending { color: #f59e0b; background: #fef3c7; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .status-in_progress { color: #3b82f6; background: #dbeafe; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .status-resolved { color: #10b981; background: #d1fae5; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        
+        .gradient-bg { background: #1e3a8a; }
+        .gradient-red { background: #1e40af; }
+        .gradient-blue { background: #1e40af; }
+        .gradient-green { background: #059669; }
+        .gradient-purple { background: #7c3aed; }
+        
+        .animate-pulse-slow { animation: none; }
+        .animate-bounce-slow { animation: none; }
+        
+        .glass-effect { 
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(30, 64, 175, 0.2);
+        }
+        
+        .table-row-hover:hover { background: #f8fafc; transition: background-color 0.2s ease; }
+        
+        .btn-primary { 
+            background: #1e40af;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover { 
+            background: #1e3a8a;
+        }
+        
+        .notification { 
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background: #059669; }
+        .notification.error { background: #dc2626; }
+        
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #1e40af;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stats-icon { 
+            transition: transform 0.2s ease;
+        }
+        .stats-icon:hover { 
+            transform: scale(1.05);
+        }
+        
+        .nav-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .nav-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .active-nav-card {
+            border-color: #1e40af;
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
+            background: #f8faff;
+        }
+        
+        .section-content {
+            transition: all 0.3s ease;
+        }
+        
+        .section-content.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <nav class="bg-blue-900 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="text-2xl font-bold text-white flex items-center">
+                        <i class="fas fa-shield-alt mr-3 text-blue-200"></i>
+                        <span class="text-white">College Admin Panel</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span id="adminInfo" class="text-white font-medium"></span>
+                    </div>
+                    <button onclick="signOut()" class="bg-blue-800 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300 font-medium border border-blue-700">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Stats Cards -->
+        <div id="statsCards" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 hidden">
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-blue-500">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-full gradient-blue text-white stats-icon">
+                        <i class="fas fa-clipboard-list text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Complaints</p>
+                        <p id="totalComplaints" class="text-3xl font-bold text-gray-800 animate-pulse-slow">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-yellow-500">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-full gradient-purple text-white stats-icon">
+                        <i class="fas fa-clock text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Pending</p>
+                        <p id="pendingComplaints" class="text-3xl font-bold text-gray-800 animate-pulse-slow">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-full gradient-red text-white stats-icon">
+                        <i class="fas fa-exclamation-triangle text-2xl animate-bounce-slow"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Unassigned</p>
+                        <p id="unassignedComplaints" class="text-3xl font-bold text-gray-800 animate-pulse-slow">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-green-500">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-full gradient-green text-white stats-icon">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Resolved</p>
+                        <p id="resolvedComplaints" class="text-3xl font-bold text-gray-800 animate-pulse-slow">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Stats -->
+        <div id="feedbackStatsCards" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 hidden">
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-4 border-purple-500">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-full gradient-bg text-white stats-icon">
+                        <i class="fas fa-star text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Feedback</p>
+                        <p id="totalFeedback" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-4 border-orange-500">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-full gradient-purple text-white stats-icon">
+                        <i class="fas fa-chart-line text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Average Rating</p>
+                        <div class="flex items-center">
+                            <p id="averageRating" class="text-3xl font-bold text-gray-800 mr-2">0.0</p>
+                            <div class="flex">
+                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-4 border-pink-500">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-full gradient-red text-white stats-icon">
+                        <i class="fas fa-comments text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Recent Feedback</p>
+                        <p id="recentFeedbackCount" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div id="complaintsNavCard" class="nav-card bg-white rounded-xl shadow-lg p-6 cursor-pointer card-hover border-l-4 border-blue-500" onclick="showSection('complaints')">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-full gradient-blue text-white stats-icon">
+                        <i class="fas fa-clipboard-list text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-800">All Complaints</h3>
+                        <p class="text-gray-600">View and manage all complaints</p>
+                        <p class="text-sm text-blue-600 font-medium mt-1">Click to view →</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="feedbackNavCard" class="nav-card bg-white rounded-xl shadow-lg p-6 cursor-pointer card-hover border-l-4 border-purple-500" onclick="showSection('feedback')">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-full gradient-bg text-white stats-icon">
+                        <i class="fas fa-star text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-800">Student Feedback</h3>
+                        <p class="text-gray-600">View ratings and reviews</p>
+                        <p class="text-sm text-purple-600 font-medium mt-1">Click to view →</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Welcome Message -->
+        <div id="welcomeSection" class="section-content">
+            <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+                <div class="mb-6">
+                    <i class="fas fa-university text-6xl text-blue-900 mb-4"></i>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">College Administration Dashboard</h2>
+                    <p class="text-gray-600 text-lg">Select a management option below to proceed</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <i class="fas fa-clipboard-list text-2xl text-blue-600 mb-2"></i>
+                        <h3 class="font-semibold text-blue-800">Manage Complaints</h3>
+                        <p class="text-sm text-blue-600">View, assign, and resolve student complaints</p>
+                    </div>
+                    
+                    <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                        <i class="fas fa-star text-2xl text-purple-600 mb-2"></i>
+                        <h3 class="font-semibold text-purple-800">View Feedback</h3>
+                        <p class="text-sm text-purple-600">Check student ratings and reviews</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complaints Section -->
+        <div id="complaintsSection" class="section-content hidden">
+            <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
+            <div class="flex flex-wrap gap-6 items-end">
+                <div class="flex-1 min-w-48">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-filter mr-2 text-blue-500"></i>Filter by Status
+                    </label>
+                    <select id="statusFilter" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200">
+                        <option value="">🔍 All Status</option>
+                        <option value="pending">⏳ Pending</option>
+                        <option value="in_progress">🔄 In Progress</option>
+                        <option value="resolved">✅ Resolved</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-48">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-tags mr-2 text-purple-500"></i>Filter by Type
+                    </label>
+                    <select id="typeFilter" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200">
+                        <option value="">🏷️ All Types</option>
+                        <option value="Electricity">⚡ Electricity</option>
+                        <option value="Plumbing">🚰 Plumbing</option>
+                        <option value="Cleaning">🧹 Cleaning</option>
+                        <option value="Internet">🌐 Internet</option>
+                        <option value="General">📋 General</option>
+                    </select>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="loadComplaints()" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold shadow-lg">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button onclick="exportData()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all duration-300">
+                        <i class="fas fa-download mr-2"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complaints Table -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+            <div class="px-6 py-4 border-b gradient-bg">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <i class="fas fa-list-alt mr-3"></i>All Complaints
+                    <span id="complaintsCount" class="ml-3 bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">0</span>
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned To</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="complaintsTableBody" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        </div>
+        <!-- End of Complaints Section -->
+
+        <!-- Feedback Section -->
+        <div id="feedbackSection" class="section-content hidden">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b gradient-bg">
+                    <h2 class="text-xl font-bold text-white flex items-center">
+                        <i class="fas fa-star mr-3"></i>Student Feedback & Reviews
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <!-- Feedback Stats Summary -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                            <div class="flex items-center">
+                                <i class="fas fa-star text-2xl text-purple-600 mr-3"></i>
+                                <div>
+                                    <p class="text-sm text-purple-600 font-medium">Total Reviews</p>
+                                    <p id="feedbackTotalCount" class="text-2xl font-bold text-purple-800">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
+                            <div class="flex items-center">
+                                <i class="fas fa-chart-line text-2xl text-yellow-600 mr-3"></i>
+                                <div>
+                                    <p class="text-sm text-yellow-600 font-medium">Average Rating</p>
+                                    <div class="flex items-center">
+                                        <p id="feedbackAverageRating" class="text-2xl font-bold text-yellow-800 mr-2">0.0</p>
+                                        <div class="flex">
+                                            <i class="fas fa-star text-yellow-500 text-sm"></i>
+                                            <i class="fas fa-star text-yellow-500 text-sm"></i>
+                                            <i class="fas fa-star text-yellow-500 text-sm"></i>
+                                            <i class="fas fa-star text-yellow-500 text-sm"></i>
+                                            <i class="fas fa-star text-yellow-500 text-sm"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                            <div class="flex items-center">
+                                <i class="fas fa-thumbs-up text-2xl text-green-600 mr-3"></i>
+                                <div>
+                                    <p class="text-sm text-green-600 font-medium">Satisfaction Rate</p>
+                                    <p id="feedbackSatisfactionRate" class="text-2xl font-bold text-green-800">0%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rating Distribution -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold mb-4 flex items-center">
+                            <i class="fas fa-chart-bar mr-2 text-blue-600"></i>Rating Distribution
+                        </h3>
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <div id="ratingDistribution" class="space-y-3">
+                                <!-- Rating bars will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Feedback -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 flex items-center">
+                            <i class="fas fa-comments mr-2 text-green-600"></i>Recent Student Reviews
+                        </h3>
+                        <div id="recentFeedbackList" class="space-y-4">
+                            <!-- Recent feedback will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End of Feedback Section -->
+    </div>
+
+    <!-- Assignment Modal -->
+    <div id="assignModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-[500px]">
+            <h3 class="text-lg font-bold mb-4 flex items-center">
+                <i class="fas fa-user-plus mr-2 text-blue-500"></i>Assign Complaint
+            </h3>
+            <input type="hidden" id="assignComplaintId">
+            
+            <!-- Manual Staff Entry -->
+            <div id="manualStaffDiv" class="mb-4">
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">
+                            <i class="fas fa-user mr-1 text-blue-500"></i>Staff Name *
+                        </label>
+                        <input type="text" id="manualStaffName" 
+                               class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-blue-500"
+                               placeholder="Enter staff member name">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">
+                            <i class="fas fa-phone mr-1 text-green-500"></i>Phone Number *
+                        </label>
+                        <input type="tel" id="manualStaffPhone" 
+                               class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-blue-500"
+                               placeholder="Enter phone number">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">
+                            <i class="fas fa-building mr-1 text-purple-500"></i>Department
+                        </label>
+                        <select id="manualStaffDepartment" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500">
+                            <option value="">Select Department</option>
+                            <option value="Electricity">Electricity</option>
+                            <option value="Plumbing">Plumbing</option>
+                            <option value="Cleaning">Cleaning</option>
+                            <option value="Internet">Internet</option>
+                            <option value="General">General Maintenance</option>
+                            <option value="Security">Security</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">
+                            <i class="fas fa-envelope mr-1 text-red-500"></i>Email (Optional)
+                        </label>
+                        <input type="email" id="manualStaffEmail" 
+                               class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-red-500"
+                               placeholder="Enter email address">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="closeAssignModal()" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200">
+                    Cancel
+                </button>
+                <button onclick="assignComplaint()" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200">
+                    <i class="fas fa-check mr-2"></i>Assign
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complaint Details Modal -->
+    <div id="complaintDetailsModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
+            <div class="gradient-bg px-6 py-4 rounded-t-xl">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        <i class="fas fa-file-alt mr-3"></i>Complaint Details
+                    </h3>
+                    <button onclick="closeComplaintDetailsModal()" class="text-white hover:text-gray-200 transition-colors duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <!-- Complaint Header -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Complaint ID</label>
+                            <p id="detailComplaintId" class="text-lg font-bold text-gray-900"></p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Status</label>
+                            <p id="detailStatus" class="text-lg font-semibold"></p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Priority</label>
+                            <p id="detailPriority" class="text-lg"></p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Created Date</label>
+                            <p id="detailCreatedDate" class="text-lg text-gray-700"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Information -->
+                <div class="bg-blue-50 rounded-lg p-4 mb-6">
+                    <h4 class="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+                        <i class="fas fa-user-graduate mr-2"></i>Student Information
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-600">Name</label>
+                            <p id="detailStudentName" class="text-gray-900 font-medium"></p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600">Email</label>
+                            <p id="detailStudentEmail" class="text-gray-900"></p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600">Student ID</label>
+                            <p id="detailStudentId" class="text-gray-900"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complaint Details -->
+                <div class="bg-white border rounded-lg p-4 mb-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-clipboard-list mr-2"></i>Complaint Details
+                    </h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-600">Title</label>
+                            <p id="detailTitle" class="text-gray-900 font-medium text-lg"></p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600">Type</label>
+                            <p id="detailType" class="text-gray-900"></p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600">Description</label>
+                            <p id="detailDescription" class="text-gray-900 leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Information -->
+                <div class="bg-green-50 rounded-lg p-4 mb-6">
+                    <h4 class="text-lg font-semibold text-green-800 mb-3 flex items-center">
+                        <i class="fas fa-map-marker-alt mr-2"></i>Location Information
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-600">Location</label>
+                            <p id="detailLocation" class="text-gray-900 font-medium"></p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600">Room Number</label>
+                            <p id="detailRoomNumber" class="text-gray-900"></p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600">Block</label>
+                            <p id="detailBlock" class="text-gray-900"></p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600">Hostel Name</label>
+                            <p id="detailHostelName" class="text-gray-900"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Information -->
+                <div class="bg-purple-50 rounded-lg p-4 mb-6">
+                    <h4 class="text-lg font-semibold text-purple-800 mb-3 flex items-center">
+                        <i class="fas fa-user-cog mr-2"></i>Assignment Information
+                    </h4>
+                    <div id="detailAssignmentInfo" class="space-y-2">
+                        <!-- Assignment details will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Complaint Image -->
+                <div id="detailImageSection" class="bg-gray-50 rounded-lg p-4 mb-6 hidden">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-image mr-2"></i>Complaint Image
+                    </h4>
+                    <div class="text-center">
+                        <img id="detailImage" src="" alt="Complaint Image" 
+                             class="max-w-full max-h-64 mx-auto rounded-lg shadow-lg cursor-pointer"
+                             onclick="openImageModal(this.src, document.getElementById('detailTitle').textContent)">
+                        <p class="text-sm text-gray-600 mt-2">Click image to view full size</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-between items-center">
+                <div class="flex space-x-3">
+                    <button id="assignFromDetailBtn" onclick="openAssignModalFromDetail()" 
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200">
+                        <i class="fas fa-user-plus mr-2"></i>Assign Staff
+                    </button>
+                    <button onclick="updateStatusFromDetail('resolved')" 
+                            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200">
+                        <i class="fas fa-check mr-2"></i>Mark Resolved
+                    </button>
+                </div>
+                <button onclick="closeComplaintDetailsModal()" 
+                        class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50">
+        <div class="relative max-w-4xl max-h-full p-4">
+            <div class="relative bg-white rounded-lg shadow-2xl">
+                <div class="flex items-center justify-between p-4 border-b">
+                    <h3 id="imageModalTitle" class="text-lg font-semibold text-gray-900">Complaint Image</h3>
+                    <button onclick="closeImageModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-4">
+                    <img id="modalImage" src="" alt="Complaint Image" class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg">
+                </div>
+                <div class="flex justify-end p-4 border-t space-x-3">
+                    <button onclick="downloadImage()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200">
+                        <i class="fas fa-download mr-2"></i>Download
+                    </button>
+                    <button onclick="closeImageModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notification" class="notification">
+        <span id="notificationText"></span>
+    </div>
+
+    <!-- Socket.io for real-time updates -->
+    <script src="js/config.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <script>
+        let currentComplaints = [];
+        let socket;
+
+        function checkAdminAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (payload.role !== 'admin') {
+                    alert('Access denied. Admin privileges required.');
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+                document.getElementById('adminInfo').textContent = `Welcome, ${payload.email}`;
+            } catch (error) {
+                window.location.href = 'login.html';
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                const stats = await response.json();
+                
+                document.getElementById('totalComplaints').textContent = stats.totalComplaints || 0;
+                document.getElementById('pendingComplaints').textContent = stats.pendingComplaints || 0;
+                document.getElementById('unassignedComplaints').textContent = stats.unassignedComplaints || 0;
+                document.getElementById('resolvedComplaints').textContent = stats.resolvedComplaints || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadFeedbackStats() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/feedback/stats`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                const feedbackStats = await response.json();
+                
+                // Update feedback stats cards
+                document.getElementById('totalFeedback').textContent = feedbackStats.totalFeedback || 0;
+                document.getElementById('averageRating').textContent = feedbackStats.averageRating || '0.0';
+                document.getElementById('recentFeedbackCount').textContent = 
+                    (feedbackStats.recentFeedback && feedbackStats.recentFeedback.length) || 0;
+                
+                // Display rating distribution
+                displayRatingDistribution(feedbackStats.ratingDistribution || []);
+                
+                // Display recent feedback
+                displayRecentFeedback(feedbackStats.recentFeedback || []);
+                
+            } catch (error) {
+                console.error('Error loading feedback stats:', error);
+            }
+        }
+
+        function displayRatingDistribution(distribution) {
+            console.log('📊 Rating Distribution Data:', distribution);
+            
+            const container = document.getElementById('ratingDistribution');
+            if (!distribution || !distribution.length) {
+                console.log('❌ No rating distribution data available');
+                container.innerHTML = '<p class="text-gray-500">No feedback ratings yet</p>';
+                return;
+            }
+
+            const total = distribution.reduce((sum, item) => sum + item.count, 0);
+            console.log(`📈 Total feedback count: ${total}`);
+            
+            // Sort by rating descending to show 5 stars first
+            const sortedDistribution = distribution.sort((a, b) => b.rating - a.rating);
+            
+            container.innerHTML = sortedDistribution.map(item => {
+                const percentage = ((item.count / total) * 100).toFixed(1);
+                console.log(`⭐ ${item.rating} stars: ${item.count} reviews (${percentage}%)`);
+                
+                return `
+                    <div class="flex items-center mb-2">
+                        <div class="flex items-center w-24">
+                            <span class="text-sm font-medium mr-2">${item.rating}</span>
+                            <div class="flex">
+                                ${Array(5).fill().map((_, i) => 
+                                    `<i class="fas fa-star text-xs ${i < item.rating ? 'text-yellow-400' : 'text-gray-300'}"></i>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <div class="flex-1 mx-4">
+                            <div class="bg-gray-200 rounded-full h-3">
+                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500" 
+                                     style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-700 font-medium w-20">${item.count} (${percentage}%)</span>
+                    </div>
+                `;
+            }).join('');
+            
+            console.log('✅ Rating distribution displayed successfully');
+        }
+
+        function displayRecentFeedback(feedback) {
+            const container = document.getElementById('recentFeedbackList');
+            if (!feedback.length) {
+                container.innerHTML = '<p class="text-gray-500">No recent feedback</p>';
+                return;
+            }
+
+            container.innerHTML = feedback.map(item => `
+                <div class="border rounded-lg p-4 bg-gray-50">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-medium">${item.title}</h4>
+                            <p class="text-sm text-gray-600">by ${item.user_name}</p>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="flex mr-2">
+                                ${Array(5).fill().map((_, i) => 
+                                    `<i class="fas fa-star text-sm ${i < item.rating ? 'text-yellow-400' : 'text-gray-300'}"></i>`
+                                ).join('')}
+                            </div>
+                            <span class="text-sm font-medium">${item.rating}/5</span>
+                        </div>
+                    </div>
+                    ${item.comment ? `<p class="text-sm text-gray-700 italic">"${item.comment}"</p>` : ''}
+                    <p class="text-xs text-gray-500 mt-2">${new Date(item.created_at).toLocaleDateString()}</p>
+                </div>
+            `).join('');
+        }
+
+        async function loadComplaints() {
+            try {
+                const statusFilter = document.getElementById('statusFilter').value;
+                const typeFilter = document.getElementById('typeFilter').value;
+                
+                let url = `${API_BASE_URL}/api/admin/complaints?`;
+                if (statusFilter) url += `status=${statusFilter}&`;
+                if (typeFilter) url += `type=${typeFilter}&`;
+                
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                currentComplaints = await response.json();
+                displayComplaints(currentComplaints);
+            } catch (error) {
+                console.error('Error loading complaints:', error);
+            }
+        }
+
+        function displayComplaints(complaints) {
+            const tbody = document.getElementById('complaintsTableBody');
+            const countElement = document.getElementById('complaintsCount');
+            
+            tbody.innerHTML = '';
+            countElement.textContent = complaints.length;
+
+            complaints.forEach(complaint => {
+                const row = document.createElement('tr');
+                row.className = 'table-row-hover';
+                row.innerHTML = `
+                    <td class="px-6 py-4 text-sm font-medium">
+                        <button onclick="openComplaintDetailsModal(${complaint.id})" 
+                                class="text-blue-600 hover:text-blue-800 hover:underline font-semibold">
+                            ${complaint.complaint_id}
+                        </button>
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <div class="font-medium">${complaint.user_name}</div>
+                        <div class="text-gray-500">${complaint.user_email}</div>
+                    </td>
+                    <td class="px-6 py-4 text-sm">${complaint.title}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <span class="px-2 py-1 text-xs bg-gray-100 rounded">${complaint.complaint_type}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        ${complaint.image_path ? 
+                            `<div class="flex items-center space-x-2">
+                                <img src="uploads/${complaint.image_path}" 
+                                     alt="Complaint Image" 
+                                     class="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-pointer hover:scale-110 transition-transform duration-200"
+                                     onclick="openImageModal('uploads/${complaint.image_path}', '${complaint.title}')">
+                                <button onclick="openImageModal('uploads/${complaint.image_path}', '${complaint.title}')" 
+                                        class="text-blue-600 hover:text-blue-800 text-xs">
+                                    <i class="fas fa-expand-alt"></i> View
+                                </button>
+                            </div>` : 
+                            '<span class="text-gray-400 text-xs"><i class="fas fa-image mr-1"></i>No Image</span>'
+                        }
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <span class="status-${complaint.status} font-medium">
+                            ${complaint.status.replace('_', ' ').toUpperCase()}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        ${complaint.assigned_staff_name ? 
+                            `<div class="text-sm">
+                                <div class="font-medium text-gray-900">${complaint.assigned_staff_name}</div>
+                                <div class="text-gray-500">${complaint.department}</div>
+                            </div>` :
+                            complaint.manual_staff_name ?
+                            `<div class="text-sm">
+                                <div class="font-medium text-gray-900 flex items-center">
+                                    <i class="fas fa-user-edit mr-1 text-blue-500"></i>
+                                    ${complaint.manual_staff_name}
+                                </div>
+                                <div class="text-gray-500 flex items-center">
+                                    <i class="fas fa-phone mr-1 text-green-500"></i>
+                                    ${complaint.manual_staff_phone}
+                                </div>
+                                ${complaint.manual_staff_department ? 
+                                    `<div class="text-gray-500 text-xs">${complaint.manual_staff_department}</div>` : 
+                                    ''
+                                }
+                            </div>` :
+                            `<button onclick="openAssignModal(${complaint.id})" class="text-blue-600 hover:text-blue-900 flex items-center">
+                                <i class="fas fa-plus mr-1"></i>Assign
+                            </button>`
+                        }
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <button onclick="updateStatus(${complaint.id}, 'resolved')" class="text-green-600 hover:text-green-900 mr-3">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button onclick="deleteComplaint(${complaint.id})" class="text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Staff loading removed - using manual entry only
+
+        function openAssignModal(complaintId) {
+            document.getElementById('assignComplaintId').value = complaintId;
+            clearManualFields();
+            document.getElementById('assignModal').classList.add('active');
+        }
+
+        function closeAssignModal() {
+            document.getElementById('assignModal').classList.remove('active');
+            clearManualFields();
+        }
+
+        function clearManualFields() {
+            document.getElementById('manualStaffName').value = '';
+            document.getElementById('manualStaffPhone').value = '';
+            document.getElementById('manualStaffDepartment').value = '';
+            document.getElementById('manualStaffEmail').value = '';
+        }
+
+        async function assignComplaint() {
+            const complaintId = document.getElementById('assignComplaintId').value;
+            
+            // Get manual staff entry data
+            const staffName = document.getElementById('manualStaffName').value.trim();
+            const staffPhone = document.getElementById('manualStaffPhone').value.trim();
+            const staffDepartment = document.getElementById('manualStaffDepartment').value;
+            const staffEmail = document.getElementById('manualStaffEmail').value.trim();
+
+            if (!staffName || !staffPhone) {
+                showNotification('Please enter staff name and phone number', 'error');
+                return;
+            }
+
+            // Validate phone number
+            const phoneRegex = /^[0-9+\-\s()]{10,15}$/;
+            if (!phoneRegex.test(staffPhone)) {
+                showNotification('Please enter a valid phone number', 'error');
+                return;
+            }
+
+            const assignmentData = {
+                manual_staff: {
+                    name: staffName,
+                    phone: staffPhone,
+                    department: staffDepartment || 'General',
+                    email: staffEmail || null
+                }
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/complaints/${complaintId}/assign`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(assignmentData)
+                });
+
+                if (response.ok) {
+                    showNotification('Complaint assigned successfully!', 'success');
+                    closeAssignModal();
+                    loadComplaints();
+                    loadStats(); // Refresh stats
+                } else {
+                    const errorData = await response.json();
+                    showNotification(errorData.error || 'Failed to assign complaint', 'error');
+                }
+            } catch (error) {
+                console.error('Error assigning:', error);
+                showNotification('Network error occurred', 'error');
+            }
+        }
+
+        async function updateStatus(complaintId, status) {
+            const complaint = currentComplaints.find(c => c.id === complaintId);
+            if (!complaint) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/complaints/${complaintId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ ...complaint, status })
+                });
+
+                if (response.ok) {
+                    showNotification('Status updated successfully!', 'success');
+                    loadComplaints();
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+
+        async function deleteComplaint(complaintId) {
+            if (!confirm('Delete this complaint?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/complaints/${complaintId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+
+                if (response.ok) {
+                    showNotification('Complaint deleted successfully!', 'success');
+                    loadComplaints();
+                }
+            } catch (error) {
+                console.error('Error deleting:', error);
+            }
+        }
+
+        function signOut() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        // Notification System
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Image Modal Functions
+        let currentImageSrc = '';
+
+        function openImageModal(imageSrc, title) {
+            currentImageSrc = imageSrc;
+            document.getElementById('modalImage').src = imageSrc;
+            document.getElementById('imageModalTitle').textContent = `Image: ${title}`;
+            document.getElementById('imageModal').classList.add('active');
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+            currentImageSrc = '';
+        }
+
+        function downloadImage() {
+            if (currentImageSrc) {
+                const link = document.createElement('a');
+                link.href = currentImageSrc;
+                link.download = `complaint_image_${Date.now()}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showNotification('Image downloaded successfully!', 'success');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeImageModal();
+            }
+        });
+
+        // Complaint Details Modal Functions
+        let currentComplaintForDetail = null;
+
+        async function openComplaintDetailsModal(complaintId) {
+            if (!complaintId) {
+                console.error('No complaint ID provided');
+                showNotification('Invalid complaint ID', 'error');
+                return;
+            }
+
+            try {
+                console.log('Loading complaint details for ID:', complaintId);
+                
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    showNotification('Authentication required', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/api/admin/complaints/${complaintId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error:', response.status, errorText);
+                    showNotification('Failed to load complaint details', 'error');
+                    return;
+                }
+
+                const complaint = await response.json();
+                console.log('Complaint loaded:', complaint);
+                
+                if (!complaint || !complaint.id) {
+                    console.error('Invalid complaint data received');
+                    showNotification('Invalid complaint data', 'error');
+                    return;
+                }
+
+                currentComplaintForDetail = complaint;
+                populateComplaintDetails(complaint);
+                
+                const modal = document.getElementById('complaintDetailsModal');
+                if (modal) {
+                    modal.classList.add('active');
+                    console.log('Complaint details modal opened');
+                } else {
+                    console.error('Modal element not found');
+                }
+            } catch (error) {
+                console.error('Error loading complaint details:', error);
+                showNotification('Network error occurred', 'error');
+                currentComplaintForDetail = null;
+            }
+        }
+
+        function closeComplaintDetailsModal() {
+            const modal = document.getElementById('complaintDetailsModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+            currentComplaintForDetail = null;
+            console.log('Complaint details modal closed');
+        }
+
+        function populateComplaintDetails(complaint) {
+            // Basic Information
+            document.getElementById('detailComplaintId').textContent = complaint.complaint_id;
+            document.getElementById('detailStatus').innerHTML = `<span class="status-${complaint.status}">${complaint.status.replace('_', ' ').toUpperCase()}</span>`;
+            document.getElementById('detailPriority').textContent = complaint.priority || 'Medium';
+            document.getElementById('detailCreatedDate').textContent = new Date(complaint.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // Student Information
+            document.getElementById('detailStudentName').textContent = complaint.user_name || 'N/A';
+            document.getElementById('detailStudentEmail').textContent = complaint.user_email || 'N/A';
+            document.getElementById('detailStudentId').textContent = complaint.student_id || 'N/A';
+
+            // Complaint Details
+            document.getElementById('detailTitle').textContent = complaint.title;
+            document.getElementById('detailType').textContent = complaint.complaint_type;
+            document.getElementById('detailDescription').textContent = complaint.description;
+
+            // Location Information
+            document.getElementById('detailLocation').textContent = complaint.location || 'N/A';
+            document.getElementById('detailRoomNumber').textContent = complaint.room_number || 'N/A';
+            document.getElementById('detailBlock').textContent = complaint.block || 'N/A';
+            document.getElementById('detailHostelName').textContent = complaint.hostel_name || 'N/A';
+
+            // Assignment Information
+            const assignmentInfo = document.getElementById('detailAssignmentInfo');
+            if (complaint.assigned_staff_name) {
+                assignmentInfo.innerHTML = `
+                    <div class="flex items-center text-green-700">
+                        <i class="fas fa-user-check mr-2"></i>
+                        <span class="font-medium">${complaint.assigned_staff_name}</span>
+                    </div>
+                    <div class="text-sm text-gray-600">${complaint.department}</div>
+                    ${complaint.staff_phone ? `<div class="text-sm text-gray-600"><i class="fas fa-phone mr-1"></i>${complaint.staff_phone}</div>` : ''}
+                `;
+            } else if (complaint.manual_staff_name) {
+                assignmentInfo.innerHTML = `
+                    <div class="flex items-center text-blue-700">
+                        <i class="fas fa-user-edit mr-2"></i>
+                        <span class="font-medium">${complaint.manual_staff_name}</span>
+                    </div>
+                    <div class="text-sm text-gray-600"><i class="fas fa-phone mr-1"></i>${complaint.manual_staff_phone}</div>
+                    ${complaint.manual_staff_department ? `<div class="text-sm text-gray-600">${complaint.manual_staff_department}</div>` : ''}
+                    ${complaint.manual_staff_email ? `<div class="text-sm text-gray-600"><i class="fas fa-envelope mr-1"></i>${complaint.manual_staff_email}</div>` : ''}
+                `;
+            } else {
+                assignmentInfo.innerHTML = `
+                    <div class="flex items-center text-gray-500">
+                        <i class="fas fa-user-times mr-2"></i>
+                        <span>Not assigned yet</span>
+                    </div>
+                `;
+            }
+
+            // Image
+            const imageSection = document.getElementById('detailImageSection');
+            const detailImage = document.getElementById('detailImage');
+            if (complaint.image_path) {
+                detailImage.src = `uploads/${complaint.image_path}`;
+                imageSection.classList.remove('hidden');
+            } else {
+                imageSection.classList.add('hidden');
+            }
+
+            // Update assign button visibility
+            const assignBtn = document.getElementById('assignFromDetailBtn');
+            if (complaint.assigned_staff_name || complaint.manual_staff_name) {
+                assignBtn.textContent = 'Reassign Staff';
+                assignBtn.innerHTML = '<i class="fas fa-user-edit mr-2"></i>Reassign Staff';
+            } else {
+                assignBtn.innerHTML = '<i class="fas fa-user-plus mr-2"></i>Assign Staff';
+            }
+        }
+
+        function openAssignModalFromDetail() {
+            if (currentComplaintForDetail && currentComplaintForDetail.id) {
+                const complaintId = currentComplaintForDetail.id;
+                closeComplaintDetailsModal();
+                // Small delay to ensure modal is closed before opening new one
+                setTimeout(() => {
+                    openAssignModal(complaintId);
+                }, 100);
+            } else {
+                console.error('No complaint selected for assignment');
+                showNotification('Please select a complaint first', 'error');
+            }
+        }
+
+        function updateStatusFromDetail(status) {
+            if (currentComplaintForDetail && currentComplaintForDetail.id) {
+                const complaintId = currentComplaintForDetail.id;
+                updateStatus(complaintId, status);
+                closeComplaintDetailsModal();
+            } else {
+                console.error('No complaint selected for status update');
+                showNotification('Please select a complaint first', 'error');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('complaintDetailsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeComplaintDetailsModal();
+            }
+        });
+
+        // Section Navigation Functions
+        function showSection(sectionName) {
+            console.log('Switching to section:', sectionName);
+            
+            // Hide all sections
+            document.getElementById('welcomeSection').classList.add('hidden');
+            document.getElementById('complaintsSection').classList.add('hidden');
+            document.getElementById('feedbackSection').classList.add('hidden');
+            
+            // Hide all stats cards initially
+            document.getElementById('statsCards').classList.add('hidden');
+            document.getElementById('feedbackStatsCards').classList.add('hidden');
+            
+            // Remove active class from all nav cards
+            document.getElementById('complaintsNavCard').classList.remove('active-nav-card');
+            document.getElementById('feedbackNavCard').classList.remove('active-nav-card');
+            
+            // Show selected section and activate corresponding nav card
+            if (sectionName === 'complaints') {
+                document.getElementById('complaintsSection').classList.remove('hidden');
+                document.getElementById('complaintsNavCard').classList.add('active-nav-card');
+                document.getElementById('statsCards').classList.remove('hidden');
+                
+                // Load complaints data when complaints section is shown
+                loadComplaints();
+            } else if (sectionName === 'feedback') {
+                document.getElementById('feedbackSection').classList.remove('hidden');
+                document.getElementById('feedbackNavCard').classList.add('active-nav-card');
+                document.getElementById('feedbackStatsCards').classList.remove('hidden');
+                
+                // Load feedback data when feedback section is shown
+                loadFeedbackStats();
+            }
+        }
+
+        // Enhanced feedback stats loading for dedicated section
+        async function loadFeedbackStats() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/feedback/stats`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                const feedbackStats = await response.json();
+                
+                // Update main feedback stats cards
+                document.getElementById('totalFeedback').textContent = feedbackStats.totalFeedback || 0;
+                document.getElementById('averageRating').textContent = feedbackStats.averageRating || '0.0';
+                document.getElementById('recentFeedbackCount').textContent = 
+                    (feedbackStats.recentFeedback && feedbackStats.recentFeedback.length) || 0;
+                
+                // Update dedicated feedback section stats
+                document.getElementById('feedbackTotalCount').textContent = feedbackStats.totalFeedback || 0;
+                document.getElementById('feedbackAverageRating').textContent = feedbackStats.averageRating || '0.0';
+                
+                // Calculate satisfaction rate (4+ stars)
+                const satisfactionRate = calculateSatisfactionRate(feedbackStats.ratingDistribution || []);
+                document.getElementById('feedbackSatisfactionRate').textContent = satisfactionRate + '%';
+                
+                // Display rating distribution
+                displayRatingDistribution(feedbackStats.ratingDistribution || []);
+                
+                // Display recent feedback
+                displayRecentFeedback(feedbackStats.recentFeedback || []);
+                
+            } catch (error) {
+                console.error('Error loading feedback stats:', error);
+            }
+        }
+
+        function calculateSatisfactionRate(distribution) {
+            if (!distribution.length) return 0;
+            
+            const total = distribution.reduce((sum, item) => sum + item.count, 0);
+            const satisfied = distribution
+                .filter(item => item.rating >= 4)
+                .reduce((sum, item) => sum + item.count, 0);
+            
+            return total > 0 ? Math.round((satisfied / total) * 100) : 0;
+        }
+
+        // Export Data Function
+        function exportData() {
+            try {
+                const csvContent = "data:text/csv;charset=utf-8," 
+                    + "ID,Student,Email,Title,Type,Status,Assigned To,Created Date\n"
+                    + currentComplaints.map(complaint => 
+                        `${complaint.complaint_id},"${complaint.user_name}","${complaint.user_email}","${complaint.title}","${complaint.complaint_type}","${complaint.status}","${complaint.assigned_staff_name || 'Unassigned'}","${new Date(complaint.created_at).toLocaleDateString()}"`
+                    ).join("\n");
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `complaints_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('Data exported successfully!', 'success');
+            } catch (error) {
+                console.error('Export error:', error);
+                showNotification('Failed to export data', 'error');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('statusFilter').addEventListener('change', loadComplaints);
+        document.getElementById('typeFilter').addEventListener('change', loadComplaints);
+
+        // Initialize Socket.io for real-time updates
+        function initSocket() {
+            try {
+                if (typeof io !== 'undefined') {
+                    socket = io(SOCKET_URL);
+                    
+                    socket.on('connect', () => {
+                        console.log('Admin connected to server');
+                    });
+                    
+                    // Listen for new complaints
+                    socket.on('new_complaint', (data) => {
+                        console.log('New complaint received:', data);
+                        loadComplaints(); // Refresh complaints list
+                        loadStats(); // Update stats
+                    });
+                    
+                    // Listen for complaint assignments
+                    socket.on('complaint_assigned', (data) => {
+                        console.log('Complaint assigned:', data);
+                        loadComplaints(); // Refresh complaints list
+                    });
+                    
+                    // Listen for status updates
+                    socket.on('complaint_updated', (data) => {
+                        console.log('Complaint updated:', data);
+                        loadComplaints(); // Refresh complaints list
+                        loadStats(); // Update stats
+                    });
+                    
+                    // Listen for complaint deletions
+                    socket.on('complaint_deleted', (data) => {
+                        console.log('Complaint deleted:', data);
+                        loadComplaints(); // Refresh complaints list
+                        loadStats(); // Update stats
+                    });
+                    
+                } else {
+                    console.log('Socket.io not available - real-time features disabled');
+                }
+            } catch (error) {
+                console.log('Socket initialization error:', error);
+            }
+        }
+
+        // Initialize with proper sequence
+        async function initialize() {
+            checkAdminAuth();
+            
+            // Wait a bit for auth to complete
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            try {
+                await loadStats();
+                initSocket();
+                
+                console.log('✅ Admin panel initialized successfully');
+                console.log('👆 Please click on a card above to view content');
+            } catch (error) {
+                console.error('❌ Initialization error:', error);
+            }
+        }
+        
+        // Start initialization when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+        } else {
+            initialize();
+        }
+    </script>
+</body>
+</html>

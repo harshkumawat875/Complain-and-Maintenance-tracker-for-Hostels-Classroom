@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Complaint - Campus Maintenance Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f2f7ff;
+        }
+        
+        .form-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .form-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2);
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4);
+        }
+        
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body class="form-container">
+    
+    <!-- Navigation -->
+    <nav class="bg-white shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 text-xl font-extrabold text-blue-900">
+                        <i class="fas fa-hammer text-3xl mr-2 text-red-500 transform rotate-45"></i>
+                        <span class="hidden sm:inline">Complaint Tracker</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="dashboard.html" class="text-gray-900 font-semibold hover:text-blue-700 transition duration-150">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a>
+                    <a href="index.html" class="text-gray-900 font-semibold hover:text-blue-700 transition duration-150">
+                        <i class="fas fa-home mr-2"></i>Home
+                    </a>
+                    <button onclick="signOut()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-600 transition duration-200">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="form-card w-full max-w-2xl p-8 rounded-2xl">
+            
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 mr-3"></i>
+                    Submit Complaint
+                </h1>
+                <p class="text-gray-600">Report maintenance issues for quick resolution</p>
+            </div>
+
+            <!-- Complaint Form -->
+            <form id="complaintForm" class="space-y-6" enctype="multipart/form-data">
+                
+                <!-- Title -->
+                <div>
+                    <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-heading mr-2 text-blue-500"></i>Complaint Title *
+                    </label>
+                    <input 
+                        type="text" 
+                        id="title" 
+                        name="title" 
+                        required
+                        class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        placeholder="Brief description of the issue"
+                    >
+                </div>
+
+                <!-- Complaint Type -->
+                <div>
+                    <label for="complaint_type" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-tags mr-2 text-blue-500"></i>Complaint Type *
+                    </label>
+                    <select 
+                        id="complaint_type" 
+                        name="complaint_type" 
+                        required
+                        class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    >
+                        <option value="">Select complaint type</option>
+                        <option value="Electricity">Electricity</option>
+                        <option value="Plumbing">Plumbing</option>
+                        <option value="Cleaning">Cleaning</option>
+                        <option value="Internet">Internet/WiFi</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Security">Security</option>
+                        <option value="General">General Maintenance</option>
+                    </select>
+                </div>
+
+                <!-- Location Details -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="location" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-map-marker-alt mr-2 text-blue-500"></i>Location *
+                        </label>
+                        <select 
+                            id="location" 
+                            name="location" 
+                            required
+                            class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        >
+                            <option value="">Select location</option>
+                            <option value="Hostel">Hostel</option>
+                            <option value="Classroom">Classroom</option>
+                            <option value="Laboratory">Laboratory</option>
+                            <option value="Library">Library</option>
+                            <option value="Cafeteria">Cafeteria</option>
+                            <option value="Common Area">Common Area</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="room_number" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-door-open mr-2 text-blue-500"></i>Room/Class Number
+                        </label>
+                        <input 
+                            type="text" 
+                            id="room_number" 
+                            name="room_number"
+                            class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            placeholder="e.g., 101, A-204"
+                        >
+                    </div>
+                </div>
+
+                <!-- Block and Hostel -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="block" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-building mr-2 text-blue-500"></i>Block/Building
+                        </label>
+                        <input 
+                            type="text" 
+                            id="block" 
+                            name="block"
+                            class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            placeholder="e.g., Block A, Main Building"
+                        >
+                    </div>
+                    
+                    <div>
+                        <label for="hostel_name" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-home mr-2 text-blue-500"></i>Hostel Name (if applicable)
+                        </label>
+                        <input 
+                            type="text" 
+                            id="hostel_name" 
+                            name="hostel_name"
+                            class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            placeholder="e.g., Boys Hostel 1"
+                        >
+                    </div>
+                </div>
+
+                <!-- Priority -->
+                <div>
+                    <label for="priority" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle mr-2 text-blue-500"></i>Priority Level
+                    </label>
+                    <select 
+                        id="priority" 
+                        name="priority"
+                        class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    >
+                        <option value="low">Low - Can wait a few days</option>
+                        <option value="medium" selected>Medium - Should be fixed soon</option>
+                        <option value="high">High - Urgent, needs immediate attention</option>
+                    </select>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-align-left mr-2 text-blue-500"></i>Detailed Description *
+                    </label>
+                    <textarea 
+                        id="description" 
+                        name="description" 
+                        required
+                        rows="4"
+                        class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                        placeholder="Provide detailed information about the issue, when it started, and any other relevant details..."
+                    ></textarea>
+                </div>
+
+                <!-- Image Upload -->
+                <div>
+                    <label for="image" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-camera mr-2 text-blue-500"></i>Upload Image (Optional)
+                    </label>
+                    <div class="flex items-center space-x-4">
+                        <input 
+                            type="file" 
+                            id="image" 
+                            name="image" 
+                            accept="image/*"
+                            class="input-field flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        >
+                        <button 
+                            type="button" 
+                            onclick="document.getElementById('image').click()" 
+                            class="bg-gray-500 text-white px-4 py-3 rounded-lg hover:bg-gray-600 transition duration-200"
+                        >
+                            <i class="fas fa-upload mr-2"></i>Browse
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Max file size: 5MB. Supported formats: JPG, PNG, GIF</p>
+                    
+                    <!-- Image Preview -->
+                    <div id="imagePreview" class="mt-4 hidden">
+                        <img id="previewImg" class="image-preview rounded-lg border" alt="Preview">
+                        <button 
+                            type="button" 
+                            onclick="removeImage()" 
+                            class="mt-2 text-red-500 hover:text-red-700 text-sm"
+                        >
+                            <i class="fas fa-trash mr-1"></i>Remove Image
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button 
+                        type="submit" 
+                        class="submit-btn w-full py-4 px-6 text-white font-bold rounded-lg text-lg"
+                    >
+                        <i class="fas fa-paper-plane mr-2"></i>Submit Complaint
+                    </button>
+                </div>
+
+            </form>
+
+            <!-- Back Link -->
+            <div class="mt-6 text-center">
+                <a href="dashboard.html" class="text-blue-600 hover:text-blue-800 font-semibold">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Authentication JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <!-- Socket.io for real-time updates -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- Page JavaScript -->
+    <script>
+        let socket;
+        
+        // Initialize socket connection
+        function initSocket() {
+            try {
+                if (typeof io !== 'undefined') {
+                    socket = io(SOCKET_URL);
+                    
+                    socket.on('connect', () => {
+                        console.log('Connected to server');
+                    });
+                    
+                    socket.on('connect_error', (error) => {
+                        console.log('Socket connection error:', error);
+                    });
+                } else {
+                    console.log('Socket.io not available - real-time features disabled');
+                }
+            } catch (error) {
+                console.log('Socket initialization error:', error);
+            }
+        }
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = checkAuthStatus();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            initSocket();
+        });
+
+        // Image preview functionality
+        document.getElementById('image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function removeImage() {
+            document.getElementById('image').value = '';
+            document.getElementById('imagePreview').classList.add('hidden');
+        }
+
+        // Form submission
+        document.getElementById('complaintForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const user = checkAuthStatus();
+            if (!user) {
+                alert('Please log in to submit a complaint');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const formData = new FormData(this);
+            const submitBtn = document.querySelector('.submit-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/complaints`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Success
+                    showSuccess(`Complaint submitted successfully! Complaint ID: ${result.complaint_id}`);
+                    
+                    // Reset form
+                    this.reset();
+                    removeImage();
+                    
+                    // Redirect to dashboard after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 3000);
+                } else {
+                    throw new Error(result.error || 'Failed to submit complaint');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || 'Failed to submit complaint. Please try again.');
+            } finally {
+                // Reset button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+            successDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-3"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                if (successDiv.parentElement) {
+                    successDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+            errorDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-3"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                if (errorDiv.parentElement) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+
+</body>
+</html>

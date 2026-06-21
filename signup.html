@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Campus Issue Reporting System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .signup-container {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2);
+        }
+        
+        .signup-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .signup-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4);
+        }
+        
+        .google-btn {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .google-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #d1d5db;
+        }
+        
+        .strength-meter {
+            height: 4px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .strength-weak { background-color: #ef4444; }
+        .strength-medium { background-color: #f59e0b; }
+        .strength-strong { background-color: #10b981; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    
+    <!-- Signup Container -->
+    <div class="signup-container w-full max-w-lg p-8 rounded-2xl">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="flex justify-center items-center mb-4">
+                <i class="fas fa-hammer text-4xl text-red-500 transform rotate-45 mr-2"></i>
+                <div>
+                    <h1 class="text-2xl font-extrabold text-blue-900">Institute</h1>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-widest">COMPLAIN TRACKER</p>
+                </div>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
+            <p class="text-gray-600">Join our campus maintenance system</p>
+        </div>
+
+        <!-- Signup Form -->
+        <form id="signupForm" class="space-y-6">
+            
+            <!-- Name Fields -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="firstName" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2 text-green-500"></i>First Name
+                    </label>
+                    <input 
+                        type="text" 
+                        id="firstName" 
+                        name="firstName" 
+                        required
+                        class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                        placeholder="John"
+                    >
+                </div>
+                <div>
+                    <label for="lastName" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2 text-green-500"></i>Last Name
+                    </label>
+                    <input 
+                        type="text" 
+                        id="lastName" 
+                        name="lastName" 
+                        required
+                        class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                        placeholder="Doe"
+                    >
+                </div>
+            </div>
+
+            <!-- Email Field -->
+            <div>
+                <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-envelope mr-2 text-green-500"></i>Institute Email
+                </label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required
+                    class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    placeholder="john.doe@institute.edu"
+                >
+                <p class="text-xs text-gray-500 mt-1">Use your official institute email address</p>
+            </div>
+
+            <!-- Student/Staff ID -->
+            <div>
+                <label for="studentId" class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-id-card mr-2 text-green-500"></i>Student/Staff ID
+                </label>
+                <input 
+                    type="text" 
+                    id="studentId" 
+                    name="studentId" 
+                    required
+                    class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    placeholder="Enter your ID number"
+                >
+            </div>
+
+            <!-- Role Selection -->
+            <div>
+                <label for="role" class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-users mr-2 text-green-500"></i>Role
+                </label>
+                <select 
+                    id="role" 
+                    name="role" 
+                    required
+                    class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                >
+                    <option value="">Select your role</option>
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                    <option value="staff">Staff</option>
+                </select>
+            </div>
+
+            <!-- Password Field -->
+            <div>
+                <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-lock mr-2 text-green-500"></i>Password
+                </label>
+                <div class="relative">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required
+                        class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none pr-12"
+                        placeholder="Create a strong password"
+                    >
+                    <button 
+                        type="button" 
+                        id="togglePassword"
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+                <!-- Password Strength Meter -->
+                <div class="mt-2">
+                    <div class="strength-meter w-full" id="strengthMeter"></div>
+                    <p class="text-xs text-gray-500 mt-1" id="strengthText">Password strength: <span id="strengthLevel">None</span></p>
+                </div>
+            </div>
+
+            <!-- Confirm Password Field -->
+            <div>
+                <label for="confirmPassword" class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-lock mr-2 text-green-500"></i>Confirm Password
+                </label>
+                <input 
+                    type="password" 
+                    id="confirmPassword" 
+                    name="confirmPassword" 
+                    required
+                    class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    placeholder="Confirm your password"
+                >
+                <p class="text-xs text-red-500 mt-1 hidden" id="passwordMismatch">Passwords do not match</p>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="flex items-start">
+                <input 
+                    type="checkbox" 
+                    id="terms" 
+                    name="terms" 
+                    required
+                    class="mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                >
+                <label for="terms" class="ml-2 text-sm text-gray-600">
+                    I agree to the <a href="#" class="text-green-600 hover:text-green-800 font-semibold">Terms of Service</a> 
+                    and <a href="#" class="text-green-600 hover:text-green-800 font-semibold">Privacy Policy</a>
+                </label>
+            </div>
+
+            <!-- Signup Button -->
+            <button 
+                type="submit" 
+                class="signup-btn w-full py-3 px-4 text-white font-bold rounded-lg text-lg"
+            >
+                <i class="fas fa-user-plus mr-2"></i>Create Account
+            </button>
+
+        </form>
+
+        <!-- Divider -->
+        <div class="my-6 flex items-center">
+            <div class="flex-1 border-t border-gray-300"></div>
+            <span class="px-4 text-sm text-gray-500 font-medium">OR</span>
+            <div class="flex-1 border-t border-gray-300"></div>
+        </div>
+
+        <!-- Google Signup -->
+        <div id="google-signup-container">
+            <button 
+                id="google-signup-button" 
+                onclick="signUpWithGoogle()" 
+                class="google-btn w-full py-3 px-4 bg-white text-gray-700 font-semibold rounded-lg flex items-center justify-center"
+            >
+                <i class="fab fa-google mr-3 text-red-500"></i>
+                Sign up with Google
+            </button>
+        </div>
+
+        <!-- Login Link -->
+        <div class="mt-8 text-center">
+            <p class="text-gray-600">
+                Already have an account? 
+                <a href="login.html" class="text-green-600 hover:text-green-800 font-semibold">
+                    Sign in here
+                </a>
+            </p>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="mt-4 text-center">
+            <a href="index.html" class="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Home
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Authentication JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <!-- Page-specific JavaScript -->
+    <script>
+        // Google Sign-Up function
+        function signUpWithGoogle() {
+            signInWithGoogle(); // Same function, different context
+        }
+        // Toggle password visibility
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordField = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        });
+
+        // Password strength checker
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthMeter = document.getElementById('strengthMeter');
+            const strengthLevel = document.getElementById('strengthLevel');
+            
+            let strength = 0;
+            let strengthText = '';
+            
+            // Check password criteria
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            // Update strength meter
+            strengthMeter.className = 'strength-meter w-full';
+            
+            if (strength === 0) {
+                strengthText = 'None';
+                strengthMeter.style.width = '0%';
+            } else if (strength <= 2) {
+                strengthText = 'Weak';
+                strengthMeter.classList.add('strength-weak');
+                strengthMeter.style.width = '33%';
+            } else if (strength <= 4) {
+                strengthText = 'Medium';
+                strengthMeter.classList.add('strength-medium');
+                strengthMeter.style.width = '66%';
+            } else {
+                strengthText = 'Strong';
+                strengthMeter.classList.add('strength-strong');
+                strengthMeter.style.width = '100%';
+            }
+            
+            strengthLevel.textContent = strengthText;
+        });
+
+        // Password confirmation checker
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            const mismatchMsg = document.getElementById('passwordMismatch');
+            
+            if (confirmPassword && password !== confirmPassword) {
+                mismatchMsg.classList.remove('hidden');
+                this.classList.add('border-red-500');
+            } else {
+                mismatchMsg.classList.add('hidden');
+                this.classList.remove('border-red-500');
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Validation
+            if (!data.firstName || !data.lastName || !data.email || !data.studentId || !data.role || !data.password || !data.confirmPassword) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(data.email)) {
+                showError('Please enter a valid email address');
+                return;
+            }
+            
+            // Password validation
+            if (data.password !== data.confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            if (data.password.length < 8) {
+                showError('Password must be at least 8 characters long');
+                return;
+            }
+            
+            if (!data.terms) {
+                showError('Please accept the terms and conditions');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = document.querySelector('.signup-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating Account...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: data.email,
+                        password: data.password,
+                        name: `${data.firstName} ${data.lastName}`,
+                        student_id: data.studentId,
+                        role: data.role
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Store authentication data
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    localStorage.setItem('authMethod', 'manual');
+                    localStorage.setItem('loginTime', new Date().toISOString());
+                    
+                    showSuccess(`Account created successfully! Welcome ${result.user.name}! Redirecting to dashboard...`);
+                    
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Signup failed');
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                showError(error.message || 'Signup failed. Please try again.');
+            } finally {
+                // Reset button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+            successDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-3"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                if (successDiv.parentElement) {
+                    successDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+            errorDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-3"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                if (errorDiv.parentElement) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Add floating animation to the container
+        const container = document.querySelector('.signup-container');
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - window.innerWidth / 2) / 50;
+            mouseY = (e.clientY - window.innerHeight / 2) / 50;
+            
+            container.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+        });
+    </script>
+
+</body>
+</html>
